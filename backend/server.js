@@ -1136,11 +1136,6 @@ app.get('/api/documents/:id/download-zip', async (req, res) => {
   }
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`✓ Server running on http://localhost:${PORT}`);
-});
-
 // Dashboard stats endpoint
 app.get('/api/dashboard', async (req, res) => {
   try {
@@ -1360,4 +1355,9 @@ app.get('/api/upload-trends', async (req, res) => {
     console.error('Upload trends error:', err);
     res.status(500).json({ success: false, message: 'Unable to fetch upload trends' });
   }
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`✓ Server running on port ${PORT}`);
 });
