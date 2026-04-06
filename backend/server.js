@@ -68,16 +68,32 @@ app.use(bodyParser.json());
 const storage = multer.memoryStorage();
 const upload = multer({ storage, limits: { fileSize: 200 * 1024 * 1024 } }); // 200MB limit
 
-// MySQL Connection 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'maglev.proxy.rlwy.net',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || 'fKmxaGSGhxRdYQSavvMQaItecXOPVgRV',
-  database: process.env.DB_NAME || 'railway',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
+// MySQL Connection - Use MYSQL_URL if available (Railway), otherwise use individual env vars
+let poolConfig;
+if (process.env.MYSQL_URL) {
+  // Parse Railway's MySQL URL format: mysql://user:password@host:port/database
+  poolConfig = {
+    uri: process.env.MYSQL_URL,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+  };
+  console.log('Using MYSQL_URL for database connection (Railway internal)');
+} else {
+  // Fallback to individual environment variables
+  poolConfig = {
+    host: process.env.DB_HOST || 'maglev.proxy.rlwy.net',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || 'fKmxaGSGhxRdYQSavvMQaItecXOPVgRV',
+    database: process.env.DB_NAME || 'railway',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+  };
+  console.log('Using individual DB environment variables');
+}
+
+const pool = mysql.createPool(poolConfig);
 
 // Test database connection - MUST succeed before server starts listening
 let dbReady = false;
