@@ -64,10 +64,10 @@ const upload = multer({ storage, limits: { fileSize: 200 * 1024 * 1024 } }); // 
 
 // MySQL Connection 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || 'maglev.proxy.rlwy.net',
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'pjg_hospital',
+  password: process.env.DB_PASSWORD || 'fKmxaGSGhxRdYQSavvMQaItecXOPVgRV',
+  database: process.env.DB_NAME || 'railway',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
@@ -77,6 +77,30 @@ const pool = mysql.createPool({
 pool.getConnection()
   .then(() => console.log('✓ MySQL Connected Successfully'))
   .catch(err => console.error('✗ Database Connection Error:', err));
+
+// Ensure notifications table exists (simple migration at startup)
+(async () => {
+  try {
+    const connection = await pool.getConnection();
+    const createSql = `
+      CREATE TABLE IF NOT EXISTS notifications (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        message TEXT,
+        link VARCHAR(512) DEFAULT NULL,
+        is_read TINYINT(1) DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `;
+    await connection.query(createSql);
+    connection.release();
+    console.log('✓ Notifications table ensured');
+  } catch (err) {
+    console.error('Could not ensure notifications table:', err);
+  }
+})();
 
 // Routes
 app.get('/api/health', (req, res) => {
@@ -123,6 +147,56 @@ async function sendWelcomeEmail(toEmail, plainPassword, userName) {
     return true;
   } catch (err) {
     console.error('Error sending welcome email:', err);
+    return false;
+  }
+}
+
+// Send document notification email (non-blocking)
+async function sendDocumentNotificationEmail(toEmail, docMeta) {
+  try {
+    await mailerReady;
+    if (!mailTransporter) {
+      console.warn('sendDocumentNotificationEmail: mail transporter not available');
+      return false;
+    }
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const subject = `New document uploaded: ${docMeta.document_name || 'Document'}`;
+    const text = `A new document has been uploaded.
+
+Name: ${docMeta.document_name || ''}
+Category: ${docMeta.category || ''}
+Department: ${docMeta.department || ''}
+Uploaded by: ${docMeta.uploadedBy || ''}
+Files: ${docMeta.fileCount || 0}
+
+View: ${frontendUrl}
+`;
+
+    const html = `<p>A new document has been uploaded.</p>
+      <p><strong>Name:</strong> ${docMeta.document_name || ''}<br/>
+      <strong>Category:</strong> ${docMeta.category || ''}<br/>
+      <strong>Department:</strong> ${docMeta.department || ''}<br/>
+      <strong>Uploaded by:</strong> ${docMeta.uploadedBy || ''}<br/>
+      <strong>Files:</strong> ${docMeta.fileCount || 0}</p>
+      <p>Open the app to view the file.</p>`;
+
+    const info = await mailTransporter.sendMail({
+      from: process.env.EMAIL_FROM || 'no-reply@pjg.local',
+      to: toEmail,
+      subject,
+      text,
+      html
+    });
+
+    if (nodemailer.getTestMessageUrl) {
+      const preview = nodemailer.getTestMessageUrl(info);
+      if (preview) console.log('Preview document email URL:', preview);
+    }
+
+    return true;
+  } catch (err) {
+    console.error('Error sending document notification email:', err);
     return false;
   }
 }
@@ -798,6 +872,65 @@ app.post('/api/documents/upload', upload.array('document'), async (req, res) => 
       connection.release();
 
       console.log('Single insert result:', result.insertId, 'Files:', req.files.length);
+
+      // build document metadata for notifications/emails
+      const docMeta = {
+        id: result.insertId,
+        document_name: document_name,
+        category: category,
+        department: department,
+        description: description,
+        fileCount: req.files.length,
+        uploadedBy: uploadedByName || 'Unknown',
+        access_level: access_level || 'Admin Only'
+      };
+
+      // Determine recipients
+      try {
+        const conn2 = await pool.getConnection();
+        let recipients = [];
+
+        if ((access_level || 'Admin Only') === 'Admin Only') {
+          // notify admins only
+          const [rows] = await conn2.query('SELECT id, email, name FROM users WHERE role = ? AND status = ?', ['admin', 'Active']);
+          recipients = rows;
+        } else {
+          // notify users in the same department and admins
+          const [deptRows] = await conn2.query('SELECT id, email, name FROM users WHERE department = ? AND status = ?', [department, 'Active']);
+          const [adminRows] = await conn2.query('SELECT id, email, name FROM users WHERE role = ? AND status = ?', ['admin', 'Active']);
+          // merge unique recipients
+          const map = new Map();
+          [...deptRows, ...adminRows].forEach(r => { if (r && r.id) map.set(r.id, r); });
+          recipients = Array.from(map.values());
+        }
+
+        // Insert notifications and send emails to admins (or all recipients if access is admin-only)
+        for (const rcpt of recipients) {
+          try {
+            await conn2.query('INSERT INTO notifications (user_id, title, message, link) VALUES (?, ?, ?, ?)', [
+              rcpt.id,
+              `New document uploaded: ${docMeta.document_name || 'Document'}`,
+              `A new document was uploaded to ${docMeta.department || 'N/A'} by ${docMeta.uploadedBy || 'Unknown'}.`,
+              `/documents/${docMeta.id}`
+            ]);
+
+            // If admin-only, email admins; otherwise email admins only (so admins are always notified by email)
+            const shouldEmail = ((access_level || 'Admin Only') === 'Admin Only') || rcpt.role === 'admin';
+            // Some recipient rows may not have role in selection; fetch role if needed
+            if (shouldEmail) {
+              // send but do not await
+              sendDocumentNotificationEmail(rcpt.email, docMeta).then(ok => console.log('document email sent to', rcpt.email, ok)).catch(err => console.error('document email error', err));
+            }
+          } catch (nerr) {
+            console.error('Failed to insert notification for user', rcpt && rcpt.id, nerr);
+          }
+        }
+
+        conn2.release();
+      } catch (notifErr) {
+        console.error('Notification error:', notifErr);
+      }
+
       res.status(201).json({ 
         success: true, 
         message: `${req.files.length} file(s) uploaded successfully in one record`, 
@@ -1095,6 +1228,52 @@ app.get('/api/dashboard', async (req, res) => {
   } catch (err) {
     console.error('Dashboard error:', err);
     res.status(500).json({ success: false, message: 'Unable to fetch dashboard stats' });
+  }
+});
+
+// Notifications endpoints
+// Get notifications for a user
+app.get('/api/notifications', async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ success: false, message: 'userId required' });
+
+    const connection = await pool.getConnection();
+    const [rows] = await connection.query('SELECT id, title, message, link, is_read, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 100', [userId]);
+    connection.release();
+    res.json({ success: true, notifications: rows });
+  } catch (err) {
+    console.error('Get notifications error:', err);
+    res.status(500).json({ success: false, message: 'Unable to fetch notifications' });
+  }
+});
+
+// Mark notification as read
+app.put('/api/notifications/:id/read', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const connection = await pool.getConnection();
+    const [result] = await connection.query('UPDATE notifications SET is_read = 1 WHERE id = ?', [id]);
+    connection.release();
+    res.json({ success: true, updated: result.affectedRows });
+  } catch (err) {
+    console.error('Mark notification read error:', err);
+    res.status(500).json({ success: false, message: 'Unable to update notification' });
+  }
+});
+
+// Unread count
+app.get('/api/notifications/count', async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ success: false, message: 'userId required' });
+    const connection = await pool.getConnection();
+    const [rows] = await connection.query('SELECT COUNT(*) AS unread FROM notifications WHERE user_id = ? AND is_read = 0', [userId]);
+    connection.release();
+    res.json({ success: true, unread: rows[0].unread });
+  } catch (err) {
+    console.error('Notifications count error:', err);
+    res.status(500).json({ success: false, message: 'Unable to get count' });
   }
 });
 

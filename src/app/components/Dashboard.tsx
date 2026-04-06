@@ -94,6 +94,9 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
   const usersPerPage = 5;
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | null; message: string | null }>({ type: null, message: null });
+  const [notificationsList, setNotificationsList] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Dashboard stats fetched from backend
   const [stats, setStats] = useState<{ 
@@ -198,6 +201,51 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
     }
   };
 
+    // Notifications
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch(`${apiUrl}/api/notifications?userId=${user.id}`);
+        const data = await res.json();
+        if (data.success) {
+          setNotificationsList(data.notifications || []);
+          const unread = (data.notifications || []).filter((n: any) => n.is_read === 0).length;
+          setUnreadCount(unread);
+        }
+      } catch (err) {
+        console.error('Fetch notifications error:', err);
+      }
+    };
+
+    const markNotificationRead = async (id: number) => {
+      try {
+        await fetch(`${apiUrl}/api/notifications/${id}/read`, { method: 'PUT' });
+        setNotificationsList(prev => prev.map(n => n.id === id ? { ...n, is_read: 1 } : n));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (err) {
+        console.error('Mark read error:', err);
+      }
+    };
+
+    // handle click on a notification item - navigate if link available
+    const handleNotificationClick = (n: any) => {
+      markNotificationRead(n.id);
+      setShowNotifications(false);
+      if (n.link) {
+        // special-case document links so we stay within the SPA
+        if (n.link.startsWith('/documents/')) {
+          const parts = n.link.split('/');
+          const docId = parseInt(parts[2], 10);
+          if (!isNaN(docId)) {
+            setActiveTab('files');
+            viewFiles(docId, '', '');
+            return;
+          }
+        }
+        // default behaviour: navigate the browser
+        window.location.href = n.link;
+      }
+    };
+
   const handleProfileUpdate = async () => {
     if (profileFormData.password !== profileFormData.confirmPassword) {
       setNotification({ type: 'error', message: 'Passwords do not match' });
@@ -285,6 +333,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
     fetchDashboardStats();
     fetchUploadTrends(7);
     fetchProfile();
+    fetchNotifications();
   }, [user.id]);
 
   useEffect(() => {
@@ -292,6 +341,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
       fetchDashboardStats();
       fetchUploadTrends();
     }
+    fetchNotifications();
   }, [activeTab]);
 
   // Upload form state
@@ -1689,10 +1739,36 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
             <div className="text-right hidden sm:block">
               <p className="text-xs text-gray-500">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
-            <button className="relative p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-            </button>
+            <div className="relative">
+              <button onClick={() => { setShowNotifications(!showNotifications); if (!showNotifications) fetchNotifications(); }} className="relative p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-colors">
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-4 px-1 bg-red-500 text-white text-xs rounded-full flex items-center justify-center border-2 border-white">{unreadCount}</span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                  <div className="p-3 border-b border-gray-100 flex items-center justify-between">
+                    <div className="text-sm font-semibold">Notifications</div>
+                    <button onClick={() => { setNotificationsList([]); setUnreadCount(0); setShowNotifications(false); }} className="text-xs text-gray-500">Close</button>
+                  </div>
+                  <div className="max-h-60 overflow-y-auto">
+                    {notificationsList.length === 0 ? (
+                      <div className="p-4 text-sm text-gray-500">No notifications</div>
+                    ) : (
+                      notificationsList.map(n => (
+                        <div key={n.id} className={`p-3 hover:bg-gray-50 cursor-pointer ${n.is_read ? 'bg-white' : 'bg-green-50'}`} onClick={() => handleNotificationClick(n)}>
+                          <div className="text-sm font-medium text-gray-900">{n.title}</div>
+                          <div className="text-xs text-gray-600">{n.message}</div>
+                          <div className="text-xs text-gray-400 mt-1">{new Date(n.created_at).toLocaleString()}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
