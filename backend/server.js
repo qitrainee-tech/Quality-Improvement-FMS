@@ -79,37 +79,53 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-// Test database connection
-pool.getConnection()
-  .then(() => console.log('✓ MySQL Connected Successfully'))
-  .catch(err => console.error('✗ Database Connection Error:', err));
-
-// Ensure notifications table exists (simple migration at startup)
+// Test database connection - MUST succeed before server starts listening
+let dbReady = false;
 (async () => {
   try {
     const connection = await pool.getConnection();
-    const createSql = `
-      CREATE TABLE IF NOT EXISTS notifications (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        title VARCHAR(255) NOT NULL,
-        message TEXT,
-        link VARCHAR(512) DEFAULT NULL,
-        is_read TINYINT(1) DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `;
-    await connection.query(createSql);
+    await connection.ping();
     connection.release();
-    console.log('✓ Notifications table ensured');
+    console.log('✓ MySQL Connected Successfully');
+
+    // Ensure notifications table exists (simple migration at startup)
+    try {
+      const conn = await pool.getConnection();
+      const createSql = `
+        CREATE TABLE IF NOT EXISTS notifications (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          title VARCHAR(255) NOT NULL,
+          message TEXT,
+          link VARCHAR(512) DEFAULT NULL,
+          is_read TINYINT(1) DEFAULT 0,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `;
+      await conn.query(createSql);
+      conn.release();
+      console.log('✓ Notifications table ensured');
+    } catch (err) {
+      console.error('Could not ensure notifications table:', err);
+    }
+
+    dbReady = true;
+    console.log('✓ Database ready, starting server...');
   } catch (err) {
-    console.error('Could not ensure notifications table:', err);
+    console.error('✗ FATAL: Database Connection Error:', err.message);
+    console.error('✗ Connection details - Host:', process.env.DB_HOST || 'maglev.proxy.rlwy.net');
+    console.error('✗ Connection details - User:', process.env.DB_USER || 'root');
+    console.error('✗ Connection details - Database:', process.env.DB_NAME || 'railway');
+    process.exit(1);
   }
 })();
 
 // Routes
 app.get('/api/health', (req, res) => {
+  if (!dbReady) {
+    return res.status(503).json({ status: 'Server starting, database not ready yet' });
+  }
   res.json({ status: 'Server is running' });
 });
 
@@ -1363,16 +1379,25 @@ app.get('/api/upload-trends', async (req, res) => {
   }
 });
 
-// Start server
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✓ Server running on port ${PORT}`);
-});
+// Start server only after database is ready
+const startServer = () => {
+  if (dbReady) {
+    const server = app.listen(PORT, '0.0.0.0', () => {
+      console.log(`✓ Server running on port ${PORT}`);
+    });
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, closing server...');
-  server.close(() => {
-    console.log('Server closed');
-    process.exit(0);
-  });
-});
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      console.log('SIGTERM received, closing server...');
+      server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+      });
+    });
+  } else {
+    // Check again in 500ms
+    setTimeout(startServer, 500);
+  }
+};
+
+startServer();
