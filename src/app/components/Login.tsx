@@ -265,7 +265,7 @@ export function Login({ onLogin }: LoginProps) {
               </button>
             </form>
 
-            <div className="mt-8 text-center">
+            {/* <div className="mt-8 text-center">
               <p className="text-gray-500">
                 Don't have an account?{" "}
                 <a
@@ -275,7 +275,7 @@ export function Login({ onLogin }: LoginProps) {
                   Contact IT Support
                 </a>
               </p>
-            </div>
+            </div> */}
 
             <div className="mt-12 pt-6 border-t border-gray-100">
               <p className="text-xs text-center text-gray-400">
