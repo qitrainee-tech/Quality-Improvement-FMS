@@ -1418,16 +1418,7 @@ app.get('/api/upload-trends', async (req, res) => {
   }
 });
 
-// Global error handler middleware
-app.use((err, req, res, next) => {
-  console.error('Global error handler:', err);
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || 'Internal server error'
-  });
-});
-
-// 404 handler
+// 404 handler - must come before error handler
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'API route not found' });
 });
