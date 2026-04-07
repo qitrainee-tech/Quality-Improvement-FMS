@@ -61,24 +61,12 @@ console.log('  PORT:', process.env.PORT || '3001');
 console.log('  DB_HOST:', process.env.DB_HOST ? 'set' : 'using fallback');
 console.log('  DB_NAME:', process.env.DB_NAME ? 'set' : 'using fallback');
 
-// CORS configuration for cross-origin requests (Vercel frontend → Railway backend)
-const corsOptions = {
-  origin: [
-    'https://quality-integrity-fms.vercel.app',
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://localhost:3001'
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  optionsSuccessStatus: 200
-};
-
-app.use(cors(corsOptions));
-
-// Explicit OPTIONS handler for preflight requests
-app.options('*', cors(corsOptions));
+// CORS configuration - simple and reliable
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use(bodyParser.json());
 
@@ -1434,11 +1422,6 @@ app.get('/api/upload-trends', async (req, res) => {
     console.error('Upload trends error:', err);
     res.status(500).json({ success: false, message: 'Unable to fetch upload trends' });
   }
-});
-
-// 404 handler - must come before error handler
-app.use((req, res) => {
-  res.status(404).json({ success: false, message: 'API route not found' });
 });
 
 // Start server only after database is ready
