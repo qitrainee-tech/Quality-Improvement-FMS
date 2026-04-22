@@ -22,7 +22,9 @@ import {
   Users,
   UserPlus,
   Shield,
-  Trash2
+  Trash2,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -78,9 +80,17 @@ const getFileIcon = (type: string) => {
 };
 
 export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'upload' | 'files' | 'users' | 'profile'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'upload' | 'files' | 'downloads' | 'users' | 'profile'>('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [downloads, setDownloads] = useState<any[]>([]);
+  const [downloadsLoading, setDownloadsLoading] = useState(false);
+  const [downloadsError, setDownloadsError] = useState<string | null>(null);
+  const [downloadsSearchTerm, setDownloadsSearchTerm] = useState('');
+  const [downloadsSortBy, setDownloadsSortBy] = useState<'name' | 'size' | 'date'>('date');
+  const [downloadsSortOrder, setDownloadsSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [downloadsCurrentPage, setDownloadsCurrentPage] = useState(1);
+  const downloadsPerPage = 10;
   const isAdmin = !!(user && user.role && user.role.toString().toLowerCase() === 'admin');
   
   // User Management State
@@ -405,7 +415,28 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
 
   useEffect(() => {
     if (activeTab === 'overview' || activeTab === 'files') fetchDocuments();
+    if (activeTab === 'downloads') fetchDownloads();
   }, [activeTab]);
+
+  const fetchDownloads = async () => {
+    setDownloadsLoading(true);
+    setDownloadsError(null);
+    setDownloadsCurrentPage(1); // Reset pagination when fetching
+    try {
+      const res = await fetch(`${apiUrl}/api/downloads`);
+      const data = await res.json();
+      if (data.success) {
+        setDownloads(data.files || []);
+      } else {
+        setDownloadsError(data.message || 'Unable to load downloads');
+      }
+    } catch (err) {
+      console.error('Fetch downloads error:', err);
+      setDownloadsError('Unable to load downloads.');
+    } finally {
+      setDownloadsLoading(false);
+    }
+  };
 
   const viewFiles = async (docId: number, docName: string, description: string = '') => {
     try {
@@ -426,6 +457,197 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
       console.error('View files error:', err);
       setNotification({ type: 'error', message: 'Unable to load files. See console.' });
     }
+  };
+
+  const renderDownloads = () => {
+    // Filter downloads based on search term
+    let filteredDownloads = downloads.filter((file) =>
+      (file.name || '').toLowerCase().includes(downloadsSearchTerm.toLowerCase()) ||
+      (file.description || '').toLowerCase().includes(downloadsSearchTerm.toLowerCase())
+    );
+
+    // Sort downloads
+    filteredDownloads.sort((a, b) => {
+      let compareValue = 0;
+      if (downloadsSortBy === 'name') {
+        compareValue = (a.name || '').localeCompare(b.name || '');
+      } else if (downloadsSortBy === 'size') {
+        compareValue = (a.size || 0) - (b.size || 0);
+      } else if (downloadsSortBy === 'date') {
+        compareValue = new Date(b.dateAdded || 0).getTime() - new Date(a.dateAdded || 0).getTime();
+      }
+      return downloadsSortOrder === 'asc' ? compareValue : -compareValue;
+    });
+
+    // Pagination
+    const totalFiles = filteredDownloads.length;
+    const totalPages = Math.ceil(totalFiles / downloadsPerPage);
+    const startIndex = (downloadsCurrentPage - 1) * downloadsPerPage;
+    const endIndex = Math.min(startIndex + downloadsPerPage, totalFiles);
+    const displayedFiles = filteredDownloads.slice(startIndex, endIndex);
+
+    const handleNextPage = () => {
+      if (downloadsCurrentPage < totalPages) {
+        setDownloadsCurrentPage(downloadsCurrentPage + 1);
+      }
+    };
+
+    const handlePreviousPage = () => {
+      if (downloadsCurrentPage > 1) {
+        setDownloadsCurrentPage(downloadsCurrentPage - 1);
+      }
+    };
+
+    const handleSortToggle = (field: 'name' | 'size' | 'date') => {
+      if (downloadsSortBy === field) {
+        setDownloadsSortOrder(downloadsSortOrder === 'asc' ? 'desc' : 'asc');
+      } else {
+        setDownloadsSortBy(field);
+        setDownloadsSortOrder('desc');
+      }
+    };
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="space-y-6"
+      >
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Downloads</h2>
+              <p className="text-sm text-gray-500 mt-1">Premade files available for all users.</p>
+            </div>
+            <button
+              onClick={fetchDownloads}
+              className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-green-700 border border-green-200 rounded-lg hover:bg-green-50 transition-colors"
+            >
+              Refresh
+            </button>
+          </div>
+
+          {/* Search Bar */}
+          <div className="mb-6 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search downloads by name or description..."
+              value={downloadsSearchTerm}
+              onChange={(e) => {
+                setDownloadsSearchTerm(e.target.value);
+                setDownloadsCurrentPage(1); // Reset to first page when searching
+              }}
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500/20 outline-none"
+            />
+          </div>
+
+          {/* Sort Controls */}
+          <div className="mb-6 flex gap-3 flex-wrap">
+            <button
+              onClick={() => handleSortToggle('name')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                downloadsSortBy === 'name'
+                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
+              }`}
+            >
+              Name {downloadsSortBy === 'name' && (downloadsSortOrder === 'asc' ? '↑' : '↓')}
+            </button>
+            <button
+              onClick={() => handleSortToggle('size')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                downloadsSortBy === 'size'
+                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
+              }`}
+            >
+              Size {downloadsSortBy === 'size' && (downloadsSortOrder === 'asc' ? '↑' : '↓')}
+            </button>
+            <button
+              onClick={() => handleSortToggle('date')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                downloadsSortBy === 'date'
+                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
+              }`}
+            >
+              Date {downloadsSortBy === 'date' && (downloadsSortOrder === 'asc' ? '↑' : '↓')}
+            </button>
+          </div>
+
+          {downloadsLoading ? (
+            <div className="p-6 bg-gray-50 rounded-xl text-gray-600">Loading downloads...</div>
+          ) : downloadsError ? (
+            <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-red-700">{downloadsError}</div>
+          ) : downloads.length === 0 ? (
+            <div className="p-6 bg-gray-50 rounded-xl text-gray-500">No downloads are available right now.</div>
+          ) : filteredDownloads.length === 0 ? (
+            <div className="p-6 bg-gray-50 rounded-xl text-gray-500">No downloads match your search.</div>
+          ) : (
+            <>
+              <div className="grid gap-4 mb-6">
+                {displayedFiles.map((file) => (
+                  <div key={file.fileKey} className="rounded-2xl border border-gray-100 p-5 shadow-sm bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:shadow-md transition-shadow">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-700 flex items-center justify-center text-xl font-bold flex-shrink-0">
+                          {file.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="text-base font-semibold text-gray-900 truncate">{file.name}</h3>
+                          <p className="text-sm text-gray-500 mt-1 line-clamp-2">{file.description}</p>
+                        </div>
+                      </div>
+                      <div className="mt-4 text-sm text-gray-500 flex gap-4 flex-wrap">
+                        <span>Size: {formatBytes(file.size)}</span>
+                        <span>Type: {file.mimeType}</span>
+                        {file.dateAdded && <span>Added: {new Date(file.dateAdded).toLocaleDateString()}</span>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => window.open(`${apiUrl}/api/downloads/${encodeURIComponent(file.fileKey)}?userId=${user.id}`, '_blank')}
+                        className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
+                      >
+                        Download
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              <div className="flex items-center justify-between border-t border-gray-100 pt-4">
+                <div className="text-sm text-gray-600">
+                  Showing {totalFiles === 0 ? 0 : startIndex + 1}-{endIndex} of {totalFiles} files
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handlePreviousPage}
+                    disabled={downloadsCurrentPage === 1}
+                    className="px-3 py-2 text-sm font-medium border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <div className="px-4 py-2 text-sm font-medium text-gray-900">
+                    Page {totalPages === 0 ? 0 : downloadsCurrentPage} of {totalPages}
+                  </div>
+                  <button
+                    onClick={handleNextPage}
+                    disabled={downloadsCurrentPage === totalPages}
+                    className="px-3 py-2 text-sm font-medium border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </motion.div>
+    );
   };
 
   const handleAddUser = async (e: React.FormEvent) => {
@@ -1616,6 +1838,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
               { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
               { id: 'upload', label: 'Upload Files', icon: FilePlus },
               { id: 'files', label: 'File Manager', icon: FolderOpen },
+              { id: 'downloads', label: 'Downloads', icon: Download },
             ].map((item) => (
               <button
                 key={item.id}
@@ -1732,7 +1955,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
               <Menu className="w-6 h-6" />
             </button>
             <h2 className="text-lg font-semibold text-gray-800 capitalize">
-              {activeTab === 'overview' ? 'System Overview' : activeTab === 'upload' ? 'Upload Center' : activeTab === 'files' ? 'Digital Archive' : activeTab === 'profile' ? 'My Profile' : 'Account Management'}
+              {activeTab === 'overview' ? 'System Overview' : activeTab === 'upload' ? 'Upload Center' : activeTab === 'files' ? 'Digital Archive' : activeTab === 'downloads' ? 'Downloads' : activeTab === 'profile' ? 'My Profile' : 'Account Management'}
             </h2>
           </div>
           <div className="flex items-center gap-4">
@@ -1791,6 +2014,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
           {activeTab === 'overview' && renderOverview()}
           {activeTab === 'upload' && renderAddFile()}
           {activeTab === 'files' && renderFileManager()}
+          {activeTab === 'downloads' && renderDownloads()}
           {activeTab === 'users' && renderUserManagement()}
           {activeTab === 'profile' && renderProfile()}
         </div>
