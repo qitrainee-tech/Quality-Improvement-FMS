@@ -828,7 +828,6 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
                     <h4 className="text-sm font-semibold text-gray-900 truncate">{file.name}</h4>
                     <p className="text-xs text-gray-500">{formatBytes(file.size)}</p>
                   </div>
-                  <span className="text-xs text-gray-400 group-hover:text-green-600 transition-colors font-medium">Download →</span>
                 </button>
               ))
             )}
