@@ -192,7 +192,7 @@ async function sendWelcomeEmail(toEmail, plainPassword, userName) {
       return false;
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || 'https://quality-integrity-fms.vercel.app/';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://quality-improvement-fms.vercel.app/';
     const subject = `Your PJG Hospital account credentials`;
     const text = `Hello ${userName || ''},\n\n` +
       `An account has been created for you on the PJG Hospital QIFMS system.\n\n` +
