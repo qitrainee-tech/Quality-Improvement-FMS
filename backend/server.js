@@ -236,7 +236,7 @@ async function sendDocumentNotificationEmail(toEmail, docMeta) {
       return false;
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || 'https://quality-integrity-fms.vercel.app/';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://quality-improvement-fms.vercel.app/';
     const subject = `New document uploaded: ${docMeta.document_name || 'Document'}`;
     const text = `A new document has been uploaded.
 
