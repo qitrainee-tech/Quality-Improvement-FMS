@@ -816,21 +816,20 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
               <p className="text-sm text-gray-500 py-4">No downloads available</p>
             ) : (
               downloads.slice(0, 5).map((file: any) => (
-                <div key={file.fileKey} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl transition-colors border border-transparent hover:border-gray-100 group">
-                  <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center text-green-600 flex-shrink-0">
+                <button
+                  key={file.fileKey}
+                  onClick={() => window.open(`${apiUrl}/api/downloads/${encodeURIComponent(file.fileKey)}?userId=${user.id}`, '_blank')}
+                  className="w-full flex items-center gap-3 p-3 bg-gray-50 hover:bg-green-50 rounded-xl transition-colors border border-gray-100 hover:border-green-200 group cursor-pointer text-left"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0 group-hover:bg-green-200 transition-colors">
                     <Download className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-semibold text-gray-900 truncate">{file.name}</h4>
                     <p className="text-xs text-gray-500">{formatBytes(file.size)}</p>
                   </div>
-                  <button
-                    onClick={() => window.open(`${apiUrl}/api/downloads/${encodeURIComponent(file.fileKey)}?userId=${user.id}`, '_blank')}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
-                  >
-                    DL
-                  </button>
-                </div>
+                  <span className="text-xs text-gray-400 group-hover:text-green-600 transition-colors font-medium">Download →</span>
+                </button>
               ))
             )}
           </div>
@@ -845,7 +844,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
 
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-900 mb-6">Quick Access Documents</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-6">Quick Access File Manager</h3>
           <div className="space-y-4">
             {documents.length === 0 ? (
               <p className="text-sm text-gray-500 py-4">No files available</p>
