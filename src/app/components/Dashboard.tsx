@@ -887,10 +887,10 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
               className={`w-full px-4 py-2 rounded-lg border ${uploadErrors.category ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-green-500 focus:ring-green-500/20'} outline-none transition-all bg-white`}
             >
               <option value="">Select Category</option>
-              <option>CIP</option>
-              <option>CAR</option>
-              <option>DCN</option>
-              <option>IQA</option>
+              <option>List of Records</option>
+              <option>Continuous Improvment Plan</option>
+              <option>Document Change Notice</option>
+              <option>Risk and Opportunity Registry</option>
             </select>
             {uploadErrors.category && <p className="text-xs text-red-600 mt-1">{uploadErrors.category}</p>}
           </div>

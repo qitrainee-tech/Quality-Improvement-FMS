@@ -7,11 +7,19 @@ import dotenv from 'dotenv';
 import multer from 'multer';
 import archiver from 'archiver';
 import nodemailer from 'nodemailer';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Setup __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const downloadsDir = path.join(__dirname, 'downloads');
 
 console.log('Railway PORT env var:', process.env.PORT);
 console.log('Using PORT:', PORT);
@@ -80,7 +88,6 @@ const upload = multer({ storage, limits: { fileSize: 200 * 1024 * 1024 } }); // 
 // MySQL Connection - Use MYSQL_URL if available (Railway), otherwise use environment variables
 let poolConfig;
 if (process.env.MYSQL_URL) {
-  // Parse Railway's MySQL URL format: mysql://user:password@host:port/database
   try {
     const url = new URL(process.env.MYSQL_URL);
     poolConfig = {
@@ -1425,6 +1432,108 @@ app.get('/api/upload-trends', async (req, res) => {
     res.status(500).json({ success: false, message: 'Unable to fetch upload trends' });
   }
 });
+
+// Downloads endpoints
+// List all available downloads
+app.get('/api/downloads', (req, res) => {
+  try {
+    if (!fs.existsSync(downloadsDir)) {
+      fs.mkdirSync(downloadsDir, { recursive: true });
+      return res.json({ success: true, files: [] });
+    }
+
+    const files = fs.readdirSync(downloadsDir);
+    const fileList = files
+      .map((filename) => {
+        const filePath = path.join(downloadsDir, filename);
+        const stats = fs.statSync(filePath);
+        
+        // Skip directories
+        if (stats.isDirectory()) return null;
+
+        return {
+          fileKey: filename,
+          name: filename,
+          size: stats.size,
+          description: `Available for download - ${stats.size} bytes`,
+          mimeType: getMimeType(filename),
+          dateAdded: stats.mtime
+        };
+      })
+      .filter(file => file !== null)
+      .sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+
+    res.json({ success: true, files: fileList });
+  } catch (err) {
+    console.error('List downloads error:', err);
+    res.status(500).json({ success: false, message: 'Unable to list downloads' });
+  }
+});
+
+// Download a specific file
+app.get('/api/downloads/:fileKey', (req, res) => {
+  try {
+    const { fileKey } = req.params;
+    const filePath = path.join(downloadsDir, path.basename(fileKey)); // Use basename to prevent directory traversal
+
+    // Security: prevent directory traversal
+    if (!filePath.startsWith(downloadsDir)) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ success: false, message: 'File not found' });
+    }
+
+    const stats = fs.statSync(filePath);
+    if (stats.isDirectory()) {
+      return res.status(400).json({ success: false, message: 'Cannot download directories' });
+    }
+
+    const mimeType = getMimeType(fileKey);
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Length', stats.size);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileKey}"`);
+    
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+
+    fileStream.on('error', (err) => {
+      console.error('File stream error:', err);
+      if (!res.headersSent) {
+        res.status(500).json({ success: false, message: 'Error downloading file' });
+      }
+    });
+  } catch (err) {
+    console.error('Download file error:', err);
+    res.status(500).json({ success: false, message: 'Unable to download file' });
+  }
+});
+
+// Helper function to determine MIME type
+function getMimeType(filename) {
+  const ext = path.extname(filename).toLowerCase();
+  const mimeTypes = {
+    '.pdf': 'application/pdf',
+    '.txt': 'text/plain',
+    '.csv': 'text/csv',
+    '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    '.xls': 'application/vnd.ms-excel',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.doc': 'application/msword',
+    '.ppt': 'application/vnd.ms-powerpoint',
+    '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif',
+    '.zip': 'application/zip',
+    '.rar': 'application/x-rar-compressed',
+    '.json': 'application/json',
+    '.xml': 'application/xml'
+  };
+  return mimeTypes[ext] || 'application/octet-stream';
+}
 
 // Start server only after database is ready
 const startServer = () => {
