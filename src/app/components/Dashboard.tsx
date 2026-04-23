@@ -923,7 +923,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
             >
               <option value="">Select Category</option>
               <option>List of Records</option>
-              <option>Continuous Improvment Plan</option>
+              <option>Continuous Improvement Plan</option>
               <option>Document Change Notice</option>
               <option>Risk and Opportunity Registry</option>
             </select>
