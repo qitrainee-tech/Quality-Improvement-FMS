@@ -749,23 +749,23 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
       transition={{ duration: 0.4 }}
       className="space-y-6"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {[
           { label: 'Total Files', value: stats.totalFiles.toLocaleString(), change: stats.totalFilesChange, color: 'bg-blue-50 text-blue-600', icon: File },
           { label: 'Storage Used', value: formatBytes(stats.storageUsed), change: stats.storageUsedChange, color: 'bg-green-50 text-green-600', icon: HardDrive },
           { label: 'Uploads Today', value: stats.uploadsToday.toLocaleString(), change: stats.uploadsTodayChange, color: 'bg-amber-50 text-amber-600', icon: Upload },
           { label: 'Active Users', value: stats.activeUsers.toString(), change: stats.activeUsersChange, color: 'bg-purple-50 text-purple-600', icon: Users },
         ].map((stat, i) => (
-          <div key={i} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+          <div key={i} className="bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-500 text-sm font-medium">{stat.label}</span>
-              <div className={`p-2 rounded-lg ${stat.color}`}>
+              <span className="text-gray-500 text-xs md:text-sm font-medium line-clamp-2">{stat.label}</span>
+              <div className={`p-2 rounded-lg flex-shrink-0 ${stat.color}`}>
                 <stat.icon className="w-4 h-4" />
               </div>
             </div>
-            <div className="flex items-end justify-between">
-              <h3 className="text-2xl font-bold text-gray-900">{stat.value}</h3>
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${stat.change === '45%' || stat.change === 'Stable' ? 'bg-blue-100 text-blue-700' : stat.change.startsWith('+') ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+            <div className="flex items-end justify-between gap-2">
+              <h3 className="text-xl md:text-2xl font-bold text-gray-900 line-clamp-1">{stat.value}</h3>
+              <span className={`text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ${stat.change === '45%' || stat.change === 'Stable' ? 'bg-blue-100 text-blue-700' : stat.change.startsWith('+') ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
                 {stat.change}
               </span>
             </div>
@@ -775,20 +775,20 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
 
       
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-gray-900">Storage Usage Trends</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="lg:col-span-2 bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 md:mb-6">
+            <h3 className="text-base md:text-lg font-bold text-gray-900">Storage Usage Trends</h3>
             <select 
               value={trendsPeriod} 
               onChange={(e) => fetchUploadTrends(parseInt(e.target.value) as 7 | 30)}
-              className="text-sm border-gray-200 rounded-lg text-gray-500 outline-none"
+              className="text-xs md:text-sm border-gray-200 rounded-lg text-gray-500 outline-none"
             >
               <option value={7}>Last 7 Days</option>
               <option value={30}>Last Month</option>
             </select>
           </div>
-          <div className="h-64">
+          <div className="h-48 sm:h-56 md:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
@@ -798,8 +798,8 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af'}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af'}} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} />
                 <Tooltip 
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
@@ -809,23 +809,23 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-900 mb-6">Quick Downloads</h3>
-          <div className="space-y-4">
+        <div className="bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <h3 className="text-base md:text-lg font-bold text-gray-900 mb-4 md:mb-6">Quick Downloads</h3>
+          <div className="space-y-3 md:space-y-4">
             {downloads.length === 0 ? (
-              <p className="text-sm text-gray-500 py-4">No downloads available</p>
+              <p className="text-xs md:text-sm text-gray-500 py-4">No downloads available</p>
             ) : (
               downloads.slice(0, 5).map((file: any) => (
                 <button
                   key={file.fileKey}
                   onClick={() => window.open(`${apiUrl}/api/downloads/${encodeURIComponent(file.fileKey)}?userId=${user.id}`, '_blank')}
-                  className="w-full flex items-center gap-3 p-3 bg-gray-50 hover:bg-green-50 rounded-xl transition-colors border border-gray-100 hover:border-green-200 group cursor-pointer text-left"
+                  className="w-full flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-gray-50 hover:bg-green-50 rounded-xl transition-colors border border-gray-100 hover:border-green-200 group cursor-pointer text-left"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0 group-hover:bg-green-200 transition-colors">
-                    <Download className="w-5 h-5" />
+                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0 group-hover:bg-green-200 transition-colors">
+                    <Download className="w-4 h-4 md:w-5 md:h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-gray-900 truncate">{file.name}</h4>
+                    <h4 className="text-xs md:text-sm font-semibold text-gray-900 truncate">{file.name}</h4>
                     <p className="text-xs text-gray-500">{formatBytes(file.size)}</p>
                   </div>
                 </button>
@@ -834,7 +834,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
           </div>
           <button 
             onClick={() => setActiveTab('downloads')}
-            className="w-full mt-6 py-2 text-sm text-green-600 font-medium hover:bg-green-50 rounded-lg transition-colors"
+            className="w-full mt-4 md:mt-6 py-2 text-xs md:text-sm text-green-600 font-medium hover:bg-green-50 rounded-lg transition-colors"
           >
             View All Downloads
           </button>
@@ -842,22 +842,22 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-900 mb-6">Quick Access File Manager</h3>
-          <div className="space-y-4">
+        <div className="bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <h3 className="text-base md:text-lg font-bold text-gray-900 mb-4 md:mb-6">Quick Access File Manager</h3>
+          <div className="space-y-2 md:space-y-4">
             {documents.length === 0 ? (
-              <p className="text-sm text-gray-500 py-4">No files available</p>
+              <p className="text-xs md:text-sm text-gray-500 py-4">No files available</p>
             ) : (
               documents.slice(0, 4).map((doc: any) => (
-                <div key={doc.id} className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer border border-transparent hover:border-gray-100" onClick={() => viewFiles(doc.id, doc.document_name, doc.description)}>
-                  <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-                    <FileText className="w-5 h-5" />
+                <div key={doc.id} className="flex items-center gap-2 md:gap-4 p-2 md:p-3 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer border border-transparent hover:border-gray-100" onClick={() => viewFiles(doc.id, doc.document_name, doc.description)}>
+                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 flex-shrink-0">
+                    <FileText className="w-4 h-4 md:w-5 md:h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-gray-900 truncate">{doc.document_name}</h4>
-                    <p className="text-xs text-gray-500">{doc.category} • {doc.document_size ? `${(doc.document_size/1024/1024).toFixed(1)} MB` : 'N/A'}</p>
+                    <h4 className="text-xs md:text-sm font-semibold text-gray-900 truncate">{doc.document_name}</h4>
+                    <p className="text-xs text-gray-500 line-clamp-1">{doc.category} • {doc.document_size ? `${(doc.document_size/1024/1024).toFixed(1)} MB` : 'N/A'}</p>
                   </div>
-                  <span className="text-xs text-gray-400">{doc.uploaded_at ? (() => {
+                  <span className="text-xs text-gray-400 flex-shrink-0">{doc.uploaded_at ? (() => {
                     const date = new Date(doc.uploaded_at);
                     const now = new Date();
                     const diffMs = now.getTime() - date.getTime();
@@ -874,7 +874,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
           </div>
           <button 
             onClick={() => setActiveTab('files')}
-            className="w-full mt-6 py-2 text-sm text-green-600 font-medium hover:bg-green-50 rounded-lg transition-colors"
+            className="w-full mt-4 md:mt-6 py-2 text-xs md:text-sm text-green-600 font-medium hover:bg-green-50 rounded-lg transition-colors"
           >
             Go to File Manager
           </button>
@@ -888,38 +888,38 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
-      className="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+      className="w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
     >
-      <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+      <div className="p-4 md:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Upload Documents</h2>
-          <p className="text-sm text-gray-500 mt-1">Add new files to the hospital registry</p>
+          <h2 className="text-lg md:text-xl font-bold text-gray-900">Upload Documents</h2>
+          <p className="text-xs md:text-sm text-gray-500 mt-1">Add new files to the hospital registry</p>
         </div>
-        <div className="p-2 bg-green-100 text-green-700 rounded-lg">
-          <Upload className="w-6 h-6" />
+        <div className="p-2 bg-green-100 text-green-700 rounded-lg flex-shrink-0">
+          <Upload className="w-5 h-5 md:w-6 md:h-6" />
         </div>
       </div>
       
-      <div className="p-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="p-4 md:p-6 lg:p-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Document Name</label>
+            <label className="text-xs md:text-sm font-medium text-gray-700">Document Name</label>
             <input
               value={docName}
               onChange={(e) => { setDocName(e.target.value); if (uploadErrors.docName) setUploadErrors(prev => ({ ...prev, docName: undefined })); }}
               type="text"
-              className={`w-full px-4 py-2 rounded-lg border ${uploadErrors.docName ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-green-500 focus:ring-green-500/20'} outline-none transition-all`}
+              className={`w-full px-3 md:px-4 py-2 rounded-lg border text-xs md:text-sm ${uploadErrors.docName ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-green-500 focus:ring-green-500/20'} outline-none transition-all`}
               placeholder="e.g. Patient Report 2023"
             />
             {uploadErrors.docName && <p className="text-xs text-red-600 mt-1">{uploadErrors.docName}</p>}
           </div>
           
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Category</label>
+            <label className="text-xs md:text-sm font-medium text-gray-700">Category</label>
             <select
               value={categoryDoc}
               onChange={(e) => { setCategoryDoc(e.target.value); if (uploadErrors.category) setUploadErrors(prev => ({ ...prev, category: undefined })); }}
-              className={`w-full px-4 py-2 rounded-lg border ${uploadErrors.category ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-green-500 focus:ring-green-500/20'} outline-none transition-all bg-white`}
+              className={`w-full px-3 md:px-4 py-2 rounded-lg border text-xs md:text-sm ${uploadErrors.category ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-green-500 focus:ring-green-500/20'} outline-none transition-all bg-white`}
             >
               <option value="">Select Category</option>
               <option>List of Records</option>
@@ -931,16 +931,16 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Access Level</label>
-            <select value={accessLevel} onChange={(e) => setAccessLevel(e.target.value)} className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all bg-white">
+            <label className="text-xs md:text-sm font-medium text-gray-700">Access Level</label>
+            <select value={accessLevel} onChange={(e) => setAccessLevel(e.target.value)} className="w-full px-3 md:px-4 py-2 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all bg-white text-xs md:text-sm">
               <option>Admin Only</option>
               <option>Public</option>
             </select>
           </div>
 
           <div className="md:col-span-2 space-y-2">
-            <label className="text-sm font-medium text-gray-700">Description / Tags</label>
-            <textarea value={descriptionDoc} onChange={(e) => setDescriptionDoc(e.target.value)} className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all h-24 resize-none" placeholder="Add relevant tags or a brief description..." />
+            <label className="text-xs md:text-sm font-medium text-gray-700">Description / Tags</label>
+            <textarea value={descriptionDoc} onChange={(e) => setDescriptionDoc(e.target.value)} className="w-full px-3 md:px-4 py-2 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all h-24 resize-none text-xs md:text-sm" placeholder="Add relevant tags or a brief description..." />
           </div>
         </div>
 
@@ -949,13 +949,13 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
           tabIndex={0}
           onClick={() => fileInputRef.current?.click()}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
-          className="border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-green-400 hover:bg-green-50/10 transition-colors group bg-gray-50/30 cursor-pointer"
+          className="border-2 border-dashed border-gray-200 rounded-xl p-4 md:p-6 flex flex-col items-center justify-center text-center hover:border-green-400 hover:bg-green-50/10 transition-colors group bg-gray-50/30 cursor-pointer"
         >
-          <div className="p-4 bg-green-50 text-green-600 rounded-full mb-4 group-hover:scale-110 transition-transform shadow-sm">
-            <Upload className="w-8 h-8" />
+          <div className="p-3 md:p-4 bg-green-50 text-green-600 rounded-full mb-3 md:mb-4 group-hover:scale-110 transition-transform shadow-sm">
+            <Upload className="w-6 h-6 md:w-8 md:h-8" />
           </div>
-          <h3 className="text-base font-semibold text-gray-900">Click to upload or drag and drop</h3>
-          <p className="text-sm text-gray-500 mt-2 max-w-xs">Supported formats: PDF, JPG, PNG, DICOM, DOCX, XLSX (Max 1GB per upload)</p>
+          <h3 className="text-sm md:text-base font-semibold text-gray-900">Click to upload or drag and drop</h3>
+          <p className="text-xs text-gray-500 mt-1 md:mt-2 max-w-xs">Supported formats: PDF, JPG, PNG, DICOM, DOCX, XLSX (Max 1GB per upload)</p>
           <input 
             ref={fileInputRef} 
             type="file" 
@@ -968,18 +968,18 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
             className="mt-4 hidden" 
           />
           {selectedFiles.length > 0 && (
-            <div className="text-sm text-gray-600 mt-4 w-full max-h-48 overflow-y-auto">
+            <div className="text-xs md:text-sm text-gray-600 mt-4 w-full max-h-48 overflow-y-auto">
               <p className="font-medium mb-2">Selected files ({selectedFiles.length}):</p>
               {selectedFiles.map((file, idx) => (
-                <div key={idx} className="flex justify-between items-center text-xs text-gray-500 mb-1">
-                  <div className="flex items-center gap-3">
-                    <span>{file.name}</span>
-                    <span className="text-gray-400">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                <div key={idx} className="flex justify-between items-center text-xs text-gray-500 mb-1 gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="truncate">{file.name}</span>
+                    <span className="text-gray-400 flex-shrink-0">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
                   </div>
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); e.preventDefault(); setSelectedFiles(prev => prev.filter((_, i) => i !== idx)); }}
-                    className="text-xs text-red-600 hover:underline px-2 py-1 rounded"
+                    className="text-xs text-red-600 hover:underline px-2 py-1 rounded flex-shrink-0"
                     title="Remove file"
                   >
                     Remove
@@ -990,9 +990,9 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
           )}
         </div>
 
-        <div className="flex justify-end gap-3 mt-8">
+        <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6 md:mt-8">
           <button
-            className="px-6 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            className="px-4 md:px-6 py-2 md:py-2.5 text-xs md:text-sm font-medium text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors order-2 sm:order-1"
             onClick={() => {
               // If an upload is in progress, abort it
               if (uploading && uploadController) {
@@ -1013,7 +1013,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
             Cancel
           </button>
           <button 
-            className="px-6 py-2.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-lg shadow-green-600/20 transition-all flex items-center gap-2"
+            className="px-4 md:px-6 py-2 md:py-2.5 text-xs md:text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-lg shadow-green-600/20 transition-all flex items-center justify-center gap-2 order-1 sm:order-2"
             onClick={async () => {
                 // Validate required fields and set per-field errors
                 const errors: { docName?: string; category?: string; department?: string } = {};
@@ -1120,27 +1120,27 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
       transition={{ duration: 0.4 }}
       className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
     >
-      <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="p-4 md:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">File Manager</h2>
-          <p className="text-sm text-gray-500 mt-1">Browse and manage hospital documents</p>
+          <h2 className="text-lg md:text-xl font-bold text-gray-900">File Manager</h2>
+          <p className="text-xs md:text-sm text-gray-500 mt-1">Browse and manage hospital documents</p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <button onClick={() => setShowFilterModal(true)} className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 text-sm">
+        <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 w-full sm:w-auto">
+          <button onClick={() => setShowFilterModal(true)} className="flex items-center justify-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 text-xs md:text-sm whitespace-nowrap">
             <Filter className="w-4 h-4" />
             Filter
           </button>
-          <div className="relative group flex-1 sm:flex-none">
+          <div className="relative group flex-1 xs:flex-none">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-green-600" />
             <input 
               type="text" 
               placeholder="Search files..." 
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setFilePage(1); }}
-              className="w-full sm:w-64 pl-9 pr-4 py-2 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all text-sm"
+              className="w-full xs:w-56 pl-9 pr-4 py-2 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all text-xs md:text-sm"
             />
           </div>
-          <select value={filesPerPage} onChange={(e) => { setFilesPerPage(Number(e.target.value)); setFilePage(1); }} className="ml-2 px-2 py-1 rounded border border-gray-200 bg-white text-sm">
+          <select value={filesPerPage} onChange={(e) => { setFilesPerPage(Number(e.target.value)); setFilePage(1); }} className="px-2 py-2 rounded border border-gray-200 bg-white text-xs md:text-sm">
             <option value={5}>5 / page</option>
             <option value={10}>10 / page</option>
             <option value={25}>25 / page</option>
@@ -1148,7 +1148,57 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Mobile Card View */}
+      <div className="md:hidden p-4 space-y-4">
+        {displayedDocuments.length === 0 ? (
+          <p className="text-sm text-gray-500 py-4">No files available</p>
+        ) : (
+          displayedDocuments.map((doc: any) => (
+            <div key={doc.id} className="bg-gray-50 border border-gray-100 rounded-lg p-4 hover:bg-green-50/50 transition-colors">
+              <div className="flex gap-3 mb-3">
+                <div className="p-2 bg-gray-100 rounded-lg flex-shrink-0">
+                  <FileText className="w-5 h-5 text-gray-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-900 text-sm truncate">{doc.document_name}</p>
+                  <p className="text-xs text-gray-500 mt-1">{doc.category}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
+                <div>
+                  <p className="text-gray-500">Department</p>
+                  <p className="text-gray-900 font-medium">{doc.department}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Size</p>
+                  <p className="text-gray-900 font-medium font-mono">{doc.document_size ? `${(doc.document_size/1024/1024).toFixed(2)} MB` : '-'}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mb-3 text-xs border-t border-gray-200 pt-3">
+                <div>
+                  <p className="text-gray-500">Access Level</p>
+                  <span className={`text-xs px-2 py-1 rounded inline-block font-medium ${doc.access_level === 'Public' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{doc.access_level}</span>
+                </div>
+                <div>
+                  <p className="text-gray-500">Uploaded</p>
+                  <p className="text-gray-900 font-medium">{doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '-'}</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button className="flex-1 px-3 py-2 hover:bg-green-50 text-green-600 rounded transition-colors text-sm font-medium" title="View files" onClick={() => viewFiles(doc.id, doc.document_name, doc.description)}>
+                  View Files
+                </button>
+                <button className="flex-1 px-3 py-2 hover:bg-gray-100 text-gray-600 rounded transition-colors text-sm font-medium" title="Download all files as ZIP" onClick={() => window.open(`${apiUrl}/api/documents/${doc.id}/download-zip`, '_blank')}>
+                  Download
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50/50 text-xs uppercase text-gray-500 font-semibold tracking-wider">
@@ -1330,7 +1380,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
             onChange={(e) => { setUserFilterDept(e.target.value); setCurrentPage(1); }}
             className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm"
           >
-            <option value="">Divisions</option>
+            <option value="">All Department</option>
             <option>Under MCC</option>
             <option>HOPSS</option>
             <option>Finance</option>
@@ -1701,17 +1751,17 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="max-w-2xl"
+      className="w-full max-w-2xl"
     >
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <h3 className="text-xl font-semibold text-gray-900 mb-6">My Profile</h3>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6 lg:p-8">
+        <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-6">My Profile</h3>
         
         {!editingProfile ? (
           <>
             {/* Profile Picture Display */}
-            <div className="flex items-center gap-6 mb-8 pb-8 border-b border-gray-100">
-              <div className="relative">
-                <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-2xl overflow-hidden">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 md:gap-6 mb-6 md:mb-8 pb-6 md:pb-8 border-b border-gray-100">
+              <div className="relative flex-shrink-0">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-lg md:text-2xl overflow-hidden">
                   {tempProfilePicture ? (
                     <img src={tempProfilePicture} alt="Preview" className="w-full h-full object-cover" />
                   ) : profilePicture ? (
@@ -1722,9 +1772,9 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
                 </div>
                 <button 
                   onClick={() => profileFileInputRef.current?.click()}
-                  className="absolute bottom-0 right-0 bg-green-600 hover:bg-green-700 text-white p-2 rounded-full shadow-lg"
+                  className="absolute bottom-0 right-0 bg-green-600 hover:bg-green-700 text-white p-1.5 md:p-2 rounded-full shadow-lg"
                 >
-                  <FilePlus className="w-4 h-4" />
+                  <FilePlus className="w-3 h-3 md:w-4 md:h-4" />
                 </button>
               </div>
               <input 
@@ -1734,11 +1784,11 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
                 hidden
                 onChange={(e) => e.target.files?.[0] && handleProfilePictureSelect(e.target.files[0])}
               />
-              <div className="flex-1">
-                <p className="text-sm text-gray-600">Profile Picture</p>
+              <div className="flex-1 text-center sm:text-left">
+                <p className="text-xs md:text-sm text-gray-600">Profile Picture</p>
                 <p className="text-xs text-gray-500 mt-1">Click the icon to upload a new picture</p>
                 {tempProfilePicture && (
-                  <div className="flex gap-2 mt-3">
+                  <div className="flex gap-2 mt-3 justify-center sm:justify-start">
                     <button 
                       onClick={saveProfilePicture}
                       className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded font-medium transition-colors"
@@ -1760,18 +1810,18 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
             </div>
 
             {/* Profile Information */}
-            <div className="grid gap-6 mb-8">
+            <div className="grid gap-6 mb-6 md:mb-8">
               <div>
-                <label className="text-sm font-medium text-gray-700">Name</label>
-                <p className="mt-2 text-gray-900 font-medium">{user.name}</p>
+                <label className="text-xs md:text-sm font-medium text-gray-700">Name</label>
+                <p className="mt-2 text-sm md:text-base text-gray-900 font-medium">{user.name}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Email</label>
-                <p className="mt-2 text-gray-900">{user.email}</p>
+                <label className="text-xs md:text-sm font-medium text-gray-700">Email</label>
+                <p className="mt-2 text-sm md:text-base text-gray-900">{user.email}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Department</label>
-                <p className="mt-2 text-gray-900">{user.department}</p>
+                <label className="text-xs md:text-sm font-medium text-gray-700">Department</label>
+                <p className="mt-2 text-sm md:text-base text-gray-900">{user.department}</p>
               </div>
             </div>
 
@@ -1785,7 +1835,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
                   confirmPassword: ''
                 });
               }}
-              className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+              className="w-full sm:w-auto px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors text-xs md:text-sm"
             >
               Edit Profile
             </button>
@@ -1795,54 +1845,54 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
             {/* Edit Form */}
             <div className="space-y-6">
               <div>
-                <label className="text-sm font-medium text-gray-700">Name</label>
+                <label className="text-xs md:text-sm font-medium text-gray-700">Name</label>
                 <input 
                   type="text"
                   value={profileFormData.name}
                   onChange={(e) => setProfileFormData({...profileFormData, name: e.target.value})}
-                  className="mt-2 w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-500/20 outline-none"
+                  className="mt-2 w-full px-3 md:px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-500/20 outline-none text-xs md:text-sm"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Email</label>
+                <label className="text-xs md:text-sm font-medium text-gray-700">Email</label>
                 <input 
                   type="email"
                   value={profileFormData.email}
                   onChange={(e) => setProfileFormData({...profileFormData, email: e.target.value})}
-                  className="mt-2 w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-500/20 outline-none"
+                  className="mt-2 w-full px-3 md:px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-500/20 outline-none text-xs md:text-sm"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">New Password (optional)</label>
+                <label className="text-xs md:text-sm font-medium text-gray-700">New Password (optional)</label>
                 <input 
                   type="password"
                   value={profileFormData.password}
                   onChange={(e) => setProfileFormData({...profileFormData, password: e.target.value})}
-                  className="mt-2 w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-500/20 outline-none"
+                  className="mt-2 w-full px-3 md:px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-500/20 outline-none text-xs md:text-sm"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Confirm Password</label>
+                <label className="text-xs md:text-sm font-medium text-gray-700">Confirm Password</label>
                 <input 
                   type="password"
                   value={profileFormData.confirmPassword}
                   onChange={(e) => setProfileFormData({...profileFormData, confirmPassword: e.target.value})}
-                  className="mt-2 w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-500/20 outline-none"
+                  className="mt-2 w-full px-3 md:px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-500/20 outline-none text-xs md:text-sm"
                 />
               </div>
               <p className="text-xs text-gray-500">Your department cannot be changed.</p>
             </div>
 
-            <div className="flex gap-3 mt-8">
+            <div className="flex flex-col sm:flex-row gap-3 mt-8">
               <button 
                 onClick={handleProfileUpdate}
-                className="flex-1 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                className="flex-1 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors text-xs md:text-sm"
               >
                 Save Changes
               </button>
               <button 
                 onClick={() => setEditingProfile(false)}
-                className="flex-1 px-6 py-2 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                className="flex-1 px-6 py-2 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors text-xs md:text-sm"
               >
                 Cancel
               </button>
@@ -1923,13 +1973,13 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
                 setActiveTab('profile');
                 setIsSidebarOpen(false);
               }}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl mb-3 transition-all ${
+              className={`w-full flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-xl mb-3 transition-all ${
                 activeTab === 'profile' 
                   ? 'bg-green-50' 
                   : 'bg-gray-50 hover:bg-gray-100'
               }`}
             >
-              <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold overflow-hidden">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-xs md:text-sm overflow-hidden flex-shrink-0">
                 {tempProfilePicture ? (
                   <img src={tempProfilePicture} alt="Preview" className="w-full h-full object-cover" />
                 ) : profilePicture ? (
@@ -1939,7 +1989,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
+                <p className="text-xs md:text-sm font-semibold text-gray-900 truncate">{user.name}</p>
                 <p className={`text-xs truncate ${isAdmin ? 'text-gray-500' : 'text-gray-600'}`}>
                   {isAdmin ? 'Admin' : user.department}
                 </p>
@@ -1967,7 +2017,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
             )}
             <button 
               onClick={onLogout}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs md:text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
             >
               <LogOut className="w-4 h-4" />
               Sign Out
@@ -1987,19 +2037,19 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
       {/* Main Content */}
       <main className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
         {/* Header */}
-        <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <header className="bg-white border-b border-gray-100 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-2 md:gap-4 min-w-0">
             <button 
               onClick={toggleSidebar}
-              className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg lg:hidden"
+              className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg lg:hidden flex-shrink-0"
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-5 h-5 md:w-6 md:h-6" />
             </button>
-            <h2 className="text-lg font-semibold text-gray-800 capitalize">
+            <h2 className="text-base md:text-lg font-semibold text-gray-800 capitalize truncate">
               {activeTab === 'overview' ? 'System Overview' : activeTab === 'upload' ? 'Upload Center' : activeTab === 'files' ? 'Digital Archive' : activeTab === 'downloads' ? 'Downloads' : activeTab === 'profile' ? 'My Profile' : 'Account Management'}
             </h2>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
             <div className="text-right hidden sm:block">
               <p className="text-xs text-gray-500">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
@@ -2012,7 +2062,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
               </button>
 
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
                   <div className="p-3 border-b border-gray-100 flex items-center justify-between">
                     <div className="text-sm font-semibold">Notifications</div>
                     <button onClick={() => { setNotificationsList([]); setUnreadCount(0); setShowNotifications(false); }} className="text-xs text-gray-500">Close</button>
@@ -2022,10 +2072,10 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
                       <div className="p-4 text-sm text-gray-500">No notifications</div>
                     ) : (
                       notificationsList.map(n => (
-                        <div key={n.id} className={`p-3 hover:bg-gray-50 cursor-pointer ${n.is_read ? 'bg-white' : 'bg-green-50'}`} onClick={() => handleNotificationClick(n)}>
-                          <div className="text-sm font-medium text-gray-900">{n.title}</div>
-                          <div className="text-xs text-gray-600">{n.message}</div>
-                          <div className="text-xs text-gray-400 mt-1">{new Date(n.created_at).toLocaleString()}</div>
+                        <div key={n.id} className={`p-3 hover:bg-gray-50 cursor-pointer text-xs md:text-sm ${n.is_read ? 'bg-white' : 'bg-green-50'}`} onClick={() => handleNotificationClick(n)}>
+                          <div className="font-medium text-gray-900">{n.title}</div>
+                          <div className="text-gray-600">{n.message}</div>
+                          <div className="text-gray-400 mt-1">{new Date(n.created_at).toLocaleString()}</div>
                         </div>
                       ))
                     )}
@@ -2037,16 +2087,16 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
         </header>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 lg:p-8">
           {notification.message && (
-            <div className={`m-4 p-4 rounded-lg border ${notification.type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
+            <div className={`mb-4 p-4 rounded-lg border ${notification.type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
               <div className="flex items-start justify-between gap-4">
-                <div className="text-sm">
+                <div className="text-xs md:text-sm">
                   {notification.message.split('\n').map((line, idx) => (
                     <div key={idx}>{line}</div>
                   ))}
                 </div>
-                <button onClick={() => setNotification({ type: null, message: null })} className="text-sm font-medium underline">
+                <button onClick={() => setNotification({ type: null, message: null })} className="text-xs md:text-sm font-medium underline flex-shrink-0">
                   Dismiss
                 </button>
               </div>
