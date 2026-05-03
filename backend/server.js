@@ -188,6 +188,66 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running' });
 });
 
+// Test email endpoint (for debugging - use only in development/testing)
+app.get('/api/test-email', async (req, res) => {
+  try {
+    const testEmail = req.query.email || 'test@example.com';
+    
+    console.log('\n=== Testing Email Configuration ===');
+    console.log('SMTP_HOST configured:', !!process.env.SMTP_HOST);
+    console.log('SMTP_PORT configured:', !!process.env.SMTP_PORT);
+    console.log('SMTP_USER configured:', !!process.env.SMTP_USER);
+    console.log('SMTP_PASS configured:', !!process.env.SMTP_PASS);
+    
+    await mailerReady;
+    
+    if (!mailTransporter) {
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Mail transporter not available',
+        details: {
+          smtpConfigured: !!(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS),
+          fallbackMode: !!(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS) ? false : true
+        }
+      });
+    }
+
+    const testInfo = await mailTransporter.sendMail({
+      from: process.env.EMAIL_FROM || 'no-reply@pjg.local',
+      to: testEmail,
+      subject: 'QIFMS Email Test',
+      text: 'This is a test email from QIFMS. If you received this, email configuration is working!',
+      html: '<p>This is a test email from QIFMS.</p><p>If you received this, email configuration is working!</p>'
+    });
+
+    console.log('✓ Test email sent successfully');
+    
+    let previewUrl = null;
+    if (nodemailer.getTestMessageUrl) {
+      previewUrl = nodemailer.getTestMessageUrl(testInfo);
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Test email sent successfully',
+      details: {
+        to: testEmail,
+        messageId: testInfo.messageId,
+        previewUrl: previewUrl || 'N/A (production email)',
+        smtpMode: !!(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS) ? 'production' : 'test (Ethereal)'
+      }
+    });
+  } catch (err) {
+    console.error('❌ Test email error:', err.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Test email failed',
+      error: err.message,
+      smtpConfigured: !!(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS)
+    });
+  }
+});
+
 // Email helper
 async function sendWelcomeEmail(toEmail, plainPassword, userName) {
   try {

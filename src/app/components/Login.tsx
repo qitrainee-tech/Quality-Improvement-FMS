@@ -31,19 +31,40 @@ export function Login({ onLogin }: LoginProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Load reCAPTCHA script on component mount
+  // Load reCAPTCHA script on component mount (only once globally)
   useEffect(() => {
+    // Check if script already exists
+    if (window.grecaptcha) {
+      console.log("✓ reCAPTCHA already loaded");
+      return;
+    }
+
+    // Check if script tag already exists
+    if (document.querySelector('script[src*="recaptcha/api.js"]')) {
+      console.log("✓ reCAPTCHA script tag already exists");
+      return;
+    }
+
+    console.log("Loading reCAPTCHA script...");
     const recaptchaScript = document.createElement("script");
-    recaptchaScript.src =
-      `https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`;
+    recaptchaScript.src = `https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`;
     recaptchaScript.async = true;
     recaptchaScript.defer = true;
-    document.body.appendChild(recaptchaScript);
+    
+    recaptchaScript.onload = () => {
+      console.log("✓ reCAPTCHA script loaded successfully");
+    };
+    
+    recaptchaScript.onerror = () => {
+      console.error("❌ Failed to load reCAPTCHA script");
+    };
+    
+    document.head.appendChild(recaptchaScript);
 
+    // Do NOT remove the script on unmount - keep it loaded
     return () => {
-      if (document.body.contains(recaptchaScript)) {
-        document.body.removeChild(recaptchaScript);
-      }
+      // Optionally log when component unmounts
+      console.log("Login component unmounted");
     };
   }, []);
 
@@ -55,21 +76,26 @@ export function Login({ onLogin }: LoginProps) {
     try {
       let recaptchaToken = null;
 
+      // Safely get reCAPTCHA token
       try {
         if (window.grecaptcha) {
-          await window.grecaptcha.ready();
+          // Wait for grecaptcha to be ready
+          await new Promise<void>((resolve) => {
+            window.grecaptcha.ready(() => resolve());
+          });
 
           recaptchaToken = await window.grecaptcha.execute(
             RECAPTCHA_SITE_KEY,
             { action: "login" }
           );
 
-          console.log("reCAPTCHA token obtained:", recaptchaToken);
+          console.log("✓ reCAPTCHA token obtained:", recaptchaToken?.substring(0, 20) + "...");
         } else {
-          console.warn("reCAPTCHA not loaded yet");
+          console.warn("⚠ reCAPTCHA not loaded, continuing without token");
         }
       } catch (recaptchaError) {
-        console.warn("reCAPTCHA error (non-blocking):", recaptchaError);
+        console.warn("⚠ reCAPTCHA error (non-blocking):", recaptchaError);
+        // Continue without reCAPTCHA - it's non-blocking
       }
 
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
