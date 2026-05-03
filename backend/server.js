@@ -47,8 +47,12 @@ let mailerReady = (async () => {
       }
       
       mailTransporter = nodemailer.createTransport(transportConfig);
-      console.log(`Mailer: using SMTP from environment (${smtpHost}:${smtpPort})`);
+      console.log(`✓ Mailer: using SMTP from environment (${smtpHost}:${smtpPort})`);
     } else {
+      console.warn('⚠ SMTP credentials not configured. Trying Ethereal test account...');
+      console.warn('  To enable production emails on Railway, set environment variables:');
+      console.warn('    SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS');
+      
       // create an ethereal test account once
       const testAccount = await nodemailer.createTestAccount();
       mailTransporter = nodemailer.createTransport({
@@ -56,10 +60,11 @@ let mailerReady = (async () => {
         port: 587,
         auth: { user: testAccount.user, pass: testAccount.pass }
       });
-      console.log('Mailer: using Ethereal test account (preview URLs will be logged)');
+      console.log('⚠ Mailer: using Ethereal test account (TEST MODE - emails will not be delivered)');
+      console.log('  Test email credentials:', testAccount.user);
     }
   } catch (err) {
-    console.error('Mailer initialization error:', err);
+    console.error('❌ Mailer initialization error:', err.message);
     mailTransporter = null;
   }
 })();
@@ -188,7 +193,8 @@ async function sendWelcomeEmail(toEmail, plainPassword, userName) {
   try {
     await mailerReady;
     if (!mailTransporter) {
-      console.warn('sendWelcomeEmail: mail transporter not available');
+      console.error('❌ sendWelcomeEmail: mail transporter not available');
+      console.error('   SMTP_HOST, SMTP_USER, SMTP_PASSWORD must be configured on Railway for production emails');
       return false;
     }
 
@@ -215,6 +221,8 @@ async function sendWelcomeEmail(toEmail, plainPassword, userName) {
       html
     });
 
+    console.log('✓ Welcome email sent to:', toEmail);
+
     if (nodemailer.getTestMessageUrl) {
       const preview = nodemailer.getTestMessageUrl(info);
       if (preview) console.log('Preview email URL:', preview);
@@ -222,7 +230,9 @@ async function sendWelcomeEmail(toEmail, plainPassword, userName) {
 
     return true;
   } catch (err) {
-    console.error('Error sending welcome email:', err);
+    console.error('❌ Error sending welcome email:', err.message);
+    console.error('   Email to:', toEmail);
+    console.error('   Make sure SMTP credentials are set: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS');
     return false;
   }
 }
@@ -232,7 +242,7 @@ async function sendDocumentNotificationEmail(toEmail, docMeta) {
   try {
     await mailerReady;
     if (!mailTransporter) {
-      console.warn('sendDocumentNotificationEmail: mail transporter not available');
+      console.error('❌ sendDocumentNotificationEmail: mail transporter not available');
       return false;
     }
 
@@ -265,6 +275,8 @@ View: ${frontendUrl}
       html
     });
 
+    console.log('✓ Document notification email sent to:', toEmail);
+
     if (nodemailer.getTestMessageUrl) {
       const preview = nodemailer.getTestMessageUrl(info);
       if (preview) console.log('Preview document email URL:', preview);
@@ -272,7 +284,8 @@ View: ${frontendUrl}
 
     return true;
   } catch (err) {
-    console.error('Error sending document notification email:', err);
+    console.error('❌ Error sending document notification email:', err.message);
+    console.error('   Email to:', toEmail);
     return false;
   }
 }
@@ -292,6 +305,9 @@ app.post('/api/login', async (req, res) => {
 
     if (recaptchaToken) {
       try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
         const verificationUrl = 'https://www.google.com/recaptcha/api/siteverify';
 
         const recaptchaResponse = await fetch(verificationUrl, {
