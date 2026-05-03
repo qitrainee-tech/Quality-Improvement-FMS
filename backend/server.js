@@ -574,7 +574,7 @@ app.post('/api/create-user', async (req, res) => {
 
     // Determine role/department/status defaults
     const newRole = role === 'Admin' ? 'admin' : 'user';
-    const newDepartment = department || 'General';
+    const newDepartment = department || null;
     const newStatus = status || 'Active';
 
     // Insert new user and get insertId
