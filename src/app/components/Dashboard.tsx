@@ -516,15 +516,15 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
         transition={{ duration: 0.4 }}
         className="space-y-6"
       >
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Downloads</h2>
-              <p className="text-sm text-gray-500 mt-1">Premade files available for all users.</p>
+              <h2 className="text-lg md:text-xl font-bold text-gray-900">Downloads</h2>
+              <p className="text-xs md:text-sm text-gray-500 mt-1">Premade files available for all users.</p>
             </div>
             <button
               onClick={fetchDownloads}
-              className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-green-700 border border-green-200 rounded-lg hover:bg-green-50 transition-colors"
+              className="inline-flex items-center justify-center px-3 md:px-4 py-2 text-xs md:text-sm font-medium text-green-700 border border-green-200 rounded-lg hover:bg-green-50 transition-colors whitespace-nowrap"
             >
               Refresh
             </button>
@@ -532,7 +532,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
 
           {/* Search Bar */}
           <div className="mb-6 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 md:w-5 h-4 md:h-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search downloads by name or description..."
@@ -541,15 +541,15 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
                 setDownloadsSearchTerm(e.target.value);
                 setDownloadsCurrentPage(1); // Reset to first page when searching
               }}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500/20 outline-none"
+              className="w-full pl-9 md:pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500/20 outline-none"
             />
           </div>
 
           {/* Sort Controls */}
-          <div className="mb-6 flex gap-3 flex-wrap">
+          <div className="mb-6 flex gap-2 md:gap-3 flex-wrap">
             <button
               onClick={() => handleSortToggle('name')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap ${
                 downloadsSortBy === 'name'
                   ? 'bg-green-50 text-green-700 border border-green-200'
                   : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
@@ -559,7 +559,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
             </button>
             <button
               onClick={() => handleSortToggle('size')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap ${
                 downloadsSortBy === 'size'
                   ? 'bg-green-50 text-green-700 border border-green-200'
                   : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
@@ -569,7 +569,7 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
             </button>
             <button
               onClick={() => handleSortToggle('date')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap ${
                 downloadsSortBy === 'date'
                   ? 'bg-green-50 text-green-700 border border-green-200'
                   : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
@@ -591,27 +591,27 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
             <>
               <div className="grid gap-4 mb-6">
                 {displayedFiles.map((file) => (
-                  <div key={file.fileKey} className="rounded-2xl border border-gray-100 p-5 shadow-sm bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:shadow-md transition-shadow">
+                  <div key={file.fileKey} className="rounded-2xl border border-gray-100 p-3 md:p-5 shadow-sm bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:shadow-md transition-shadow overflow-hidden">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-700 flex items-center justify-center text-xl font-bold flex-shrink-0">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className="w-10 md:w-12 h-10 md:h-12 rounded-2xl bg-green-50 text-green-700 flex items-center justify-center text-lg md:text-xl font-bold flex-shrink-0">
                           {file.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <h3 className="text-base font-semibold text-gray-900 truncate">{file.name}</h3>
-                          <p className="text-sm text-gray-500 mt-1 line-clamp-2">{file.description}</p>
+                          <h3 className="text-sm md:text-base font-semibold text-gray-900 truncate">{file.name}</h3>
+                          <p className="text-xs md:text-sm text-gray-500 mt-1 line-clamp-2">{file.description}</p>
                         </div>
                       </div>
-                      <div className="mt-4 text-sm text-gray-500 flex gap-4 flex-wrap">
-                        <span>Size: {formatBytes(file.size)}</span>
-                        <span>Type: {file.mimeType}</span>
-                        {file.dateAdded && <span>Added: {new Date(file.dateAdded).toLocaleDateString()}</span>}
+                      <div className="mt-3 md:mt-4 text-xs md:text-sm text-gray-500 flex gap-3 md:gap-4 flex-wrap">
+                        <span className="truncate">Size: {formatBytes(file.size)}</span>
+                        <span className="truncate">Type: {file.mimeType}</span>
+                        {file.dateAdded && <span className="truncate">Added: {new Date(file.dateAdded).toLocaleDateString()}</span>}
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 md:gap-3 flex-shrink-0 w-full sm:w-auto">
                       <button
                         onClick={() => window.open(`${apiUrl}/api/downloads/${encodeURIComponent(file.fileKey)}?userId=${user.id}`, '_blank')}
-                        className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
+                        className="flex-1 sm:flex-none px-3 md:px-4 py-2 text-xs md:text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
                       >
                         Download
                       </button>
@@ -621,25 +621,25 @@ export function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
               </div>
 
               {/* Pagination */}
-              <div className="flex items-center justify-between border-t border-gray-100 pt-4">
-                <div className="text-sm text-gray-600">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t border-gray-100 pt-4 overflow-hidden">
+                <div className="text-xs md:text-sm text-gray-600 truncate">
                   Showing {totalFiles === 0 ? 0 : startIndex + 1}-{endIndex} of {totalFiles} files
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 md:gap-2 flex-wrap justify-end md:justify-normal">
                   <button
                     onClick={handlePreviousPage}
                     disabled={downloadsCurrentPage === 1}
-                    className="px-3 py-2 text-sm font-medium border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-2 md:px-3 py-2 text-xs md:text-sm font-medium border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    Previous
+                    Prev
                   </button>
-                  <div className="px-4 py-2 text-sm font-medium text-gray-900">
+                  <div className="px-2 md:px-4 py-2 text-xs md:text-sm font-medium text-gray-900 whitespace-nowrap">
                     Page {totalPages === 0 ? 0 : downloadsCurrentPage} of {totalPages}
                   </div>
                   <button
                     onClick={handleNextPage}
                     disabled={downloadsCurrentPage === totalPages}
-                    className="px-3 py-2 text-sm font-medium border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-2 md:px-3 py-2 text-xs md:text-sm font-medium border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Next
                   </button>
