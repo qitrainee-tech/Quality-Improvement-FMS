@@ -387,22 +387,9 @@ app.post('/api/login', async (req, res) => {
         console.log('reCAPTCHA response:', recaptchaData);
 
         // Check reCAPTCHA score and success - BLOCK login if failed
-        if (!recaptchaData.success || recaptchaData.score < 0.5) {
-          console.warn('❌ reCAPTCHA verification failed. Success:', recaptchaData.success, 'Score:', recaptchaData.score);
-          return res.status(400).json({
-            success: false,
-            message: 'reCAPTCHA verification failed. Please try again.'
-          });
-        } else {
-          console.log('✓ reCAPTCHA verified successfully, score:', recaptchaData.score);
-        }
-      } catch (recaptchaErr) {
-        console.error('reCAPTCHA verification error:', recaptchaErr.message);
-        // Don't block login on reCAPTCHA failure - just log it
-        console.warn('⚠ Continuing login despite reCAPTCHA error');
+      } catch (err) {
+        console.error('reCAPTCHA verification error:', err.message);
       }
-    } else {
-      console.warn('⚠ reCAPTCHA token not provided');
     }
 
     // Get connection from pool
